@@ -33,7 +33,6 @@ def calibrate_camera(object_points, image_points, img_size, pickle_save_path=Non
     return mtx, dist, rvecs, tvecs
 
 
-
 def find_chessboard_corners(chessboard_height, chessboard_width, images_regex_path, save_path=None):
     """
     Returns parameters needed to calibrate a camera using OpenCV's findChessboardCorners function.

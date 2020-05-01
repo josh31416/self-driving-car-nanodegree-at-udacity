@@ -1,10 +1,6 @@
-## Writeup Template
+## Advanced lane detection for self driving cars
 
-### You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
-
----
-
-**Advanced Lane Finding Project**
+### This project aims to create a pipeline with Computer Vision techniques to detect lanes on the road.
 
 The goals / steps of this project are the following:
 
@@ -19,12 +15,15 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/undistort_output.png "Undistorted"
-[image2]: ./test_images/test1.jpg "Road Transformed"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
+[image1]: ./output_images/chessboard_undistorted.png "Chessboard undistortion"
+[image2]: ./output_images/undistorted.png "Undistorted"
+[image3]: ./output_images/gradients_and_color.png "Gradients and color processing"
+[image4]: ./output_images/combined.png "Gradients and color processing combined"
+[image5]: ./output_images/warped.png "Bird's eye view transformation"
+[image6]: ./output_images/sliding_windows.png "Lane finding with sliding windows"
+[image7]: ./output_images/previous_poly.png "Lane finding with previous polynomial coefficients"
+[image8]: ./output_images/result.png "Unwarped detections on original image"
+
 [video1]: ./project_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -33,40 +32,42 @@ The goals / steps of this project are the following:
 
 ---
 
-### Writeup / README
-
-#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
-
-You're reading it!
+The code for the whole pipeline is in [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 ### Camera Calibration
 
 #### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 
-The code for this step is contained in the first code cell of the IPython notebook located in "./examples/example.ipynb" (or in lines # through # of the file called `some_file.py`).  
-
-I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
-
-I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
+The first step is to calibrate the camera. This process is aided by some images of a black and white chessboard from different perspectives. Using OpenCV's `findChessboardCorners` function, we are able to compute the corners, i.e. image points, to calibrate the camera. These corners refer to the inner corners of the chessboard. Therefore, we should create the object points as an indexes array that contains width*height (of the chessboard) elements. By assuming the chessboard is not moving in the plane z, these image points together with the coordinates in object points will be enough to calibrate the camera using OpenCV's `calibrateCamera` function and extract the camera matrix (mtx) and the distorsion coefficients (dist) parameters.
 
 ![alt text][image1]
+
+See *Camera calibration* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 10 through 78 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 ### Pipeline (single images)
 
 #### 1. Provide an example of a distortion-corrected image.
 
-To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
+Using the camera matrix (mtx) and the distorsion coefficients (dist) parameters we can undistort any image taken with this camera.
 ![alt text][image2]
 
-#### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
+See *Create binary image* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 81 through 110 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+#### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image. Provide an example of a binary image result.
+
+I used a combination of sobel x and y thresholds, sobel magnitude threshold, sobel direction threshold and saturation threshold (for yellow lanes). Here's an example of my output for this step.
 
 ![alt text][image3]
 
+The result of combining all these features can be seen in the following image.
+
+![alt text][image4]
+
+See *Create binary image* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 113 through 194 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
+
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+To perform a perspective transformation on the image, we have to define four points in a given image that will form a rectangle in the destination image. In this step we have to kepp in mind that we are trying to get a new image from a bird's eye view perspective. Providing these points we can get the transformation matrix M with OpenCV's `getPerspectiveTransform` to later transform the image with `warpPerspective` function.
 
 ```python
 src = np.float32(
@@ -92,23 +93,33 @@ This resulted in the following source and destination points:
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-![alt text][image4]
-
-#### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
-
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
-
 ![alt text][image5]
+
+See *Perspective transform* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 197 through 234 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
+
+#### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial
+
+Two method were implemented to detect the lanes in the warped image. First, the sliding windows method will find the lanes using the horizontal histogram of the bottom of the image. I accounted for very tight curves since the windows may hit the sides of the image before arriving to the top. Then I try to fit a second order polynomial and return the polynomial coefficients.
+
+![alt text][image6]
+
+Once the lanes have been found, there is not need to run the sliding windows on each frame. On the other hand, we can look for new lane pixels within a margin of the previous lanes. 
+
+![alt text][image7]
+
+See *Sliding windows* and *Margin within previous lanes* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 237 through 487 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+Using the curvature of lane equation given the polynomial coefficients I calculate both the radius for the left lane and for the right lane. Then I average them and return the result.
+
+See *Radius of curve* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 490 through 508 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+See *Result* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb)
 
-![alt text][image6]
+![alt text][image8]
 
 ---
 
@@ -116,7 +127,9 @@ I implemented this step in lines # through # in my code in `yet_another_file.py`
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link](https://youtu.be/sqobICfr758) (YouTube) to the project video.
+
+See *Video pipeline* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 511 through 764 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 ---
 
@@ -124,4 +137,10 @@ Here's a [link to my video result](./project_video.mp4)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+I had some problems of noise in the binary features step, specially in the saturacion step. I could solve this problem by setting the saturation to 0 where the brightness was not high enough.
+
+The pipeline fails in case the are different asphalt colors on the road and with shadows that make the lanes too dark, like bridge shadows. It also fails were the lanes become covered by leaves, for example.
+
+More hyperparameter tuning could be applied or some image enhancing to tackle the shadows case. However, the solution cannot be run in real time with limited computing power. The pipeline was running at 5 frames per second on my laptop. This is a real problem.
+
+I believe this technique can be used to help label some videos and train a deep learning model. One that will hopefully have better results and one that can be run in real time (>24-30 frames per second)
