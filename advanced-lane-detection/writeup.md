@@ -51,7 +51,7 @@ See *Camera calibration* section of [advanced_lane_detection.ipynb](https://gith
 Using the camera matrix (mtx) and the distorsion coefficients (dist) parameters we can undistort any image taken with this camera.
 ![alt text][image2]
 
-See *Create binary image* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 81 through 110 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
+See *Create binary image* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 81 through 110 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image. Provide an example of a binary image result.
 
@@ -63,7 +63,7 @@ The result of combining all these features can be seen in the following image.
 
 ![alt text][image4]
 
-See *Create binary image* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 113 through 194 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
+See *Create binary image* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 113 through 210 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
@@ -95,7 +95,7 @@ I verified that my perspective transform was working as expected by drawing the 
 
 ![alt text][image5]
 
-See *Perspective transform* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 197 through 234 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
+See *Perspective transform* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 213 through 250 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial
 
@@ -107,13 +107,13 @@ Once the lanes have been found, there is not need to run the sliding windows on 
 
 ![alt text][image7]
 
-See *Sliding windows* and *Margin within previous lanes* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 237 through 487 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
+See *Sliding windows* and *Margin within previous lanes* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 253 through 503 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
 Using the curvature of lane equation given the polynomial coefficients I calculate both the radius for the left lane and for the right lane. Then I average them and return the result.
 
-See *Radius of curve* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 490 through 508 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
+See *Radius of curve* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 506 through 524 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
@@ -129,7 +129,7 @@ See *Result* section of [advanced_lane_detection.ipynb](https://github.com/josh3
 
 Here's a [link](https://youtu.be/sqobICfr758) (YouTube) to the project video.
 
-See *Video pipeline* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lane 511 through 764 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
+See *Video pipeline* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 527 through 782 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 ---
 

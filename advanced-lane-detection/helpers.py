@@ -182,7 +182,7 @@ def saturation_threshold(s_channel, thresh=(0, 255)):
     """
     Computes a binary mask for some saturation thresholds
 
-    @param img: OpenCV BGR image
+    @param s_channel: saturation channel of a HLS color space image
     @param thresh: tuple with minimum and maximum thresholds, range [0-pi/2]
 
     @returns binary mask with pixel activations
@@ -190,6 +190,22 @@ def saturation_threshold(s_channel, thresh=(0, 255)):
 
     mask = np.zeros_like(s_channel)
     mask[(s_channel >= thresh[0]) & (s_channel <= thresh[1])] = 1
+
+    return mask
+
+
+def hue_threshold(h_channel, thresh=(15, 35)):
+    """
+    Computes a binary mask for some color thresholds
+
+    @param h_channel: hue channel of a HLS color space image
+    @param thresh: tuple with minimum and maximum thresholds, range [0-pi/2]
+
+    @returns binary mask with pixel activations
+    """
+
+    mask = np.zeros_like(h_channel)
+    mask[(h_channel >= thresh[0]) & (h_channel <= thresh[1])] = 1
 
     return mask
 
@@ -595,7 +611,7 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
 
         # Extracting saturation
         hls = cv2.cvtColor(undist, cv2.COLOR_RGB2HLS)
-        l, s = hls[:,:,1], hls[:,:,2]
+        h, l, s = hls[:,:,0], hls[:,:,1], hls[:,:,2]
         if 'saturation_brightness_min' in hyperparameters:
             s[l < hyperparameters['saturation_brightness_min']] = 0
         else:
@@ -649,14 +665,16 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
             s_threshold = saturation_threshold(s, thresh=params['thresh'])
         else: s_threshold = saturation_threshold(s)
 
+        h_threshold = hue_threshold(h)
+
         # Combined thresholds
         combined = np.zeros_like(undist[:,:,0])
         mask = (\
-                (gradx_binary == 1) & (grady_binary == 1))\
+                ((gradx_binary == 1) & (grady_binary == 1))\
                  | \
-                ((mag_binary == 1) & (dir_binary == 1)\
+                ((mag_binary == 1) & (dir_binary == 1))\
                  | \
-                (s_threshold == 1)\
+                ((s_threshold == 1) & (h_threshold == 1))\
                )
         combined[mask] = 1
 
