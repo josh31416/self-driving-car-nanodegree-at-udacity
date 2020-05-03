@@ -274,19 +274,11 @@ def fit_polynomial(lefty, leftx, righty, rightx, draw=False, img_shape=None):
         plot_y = np.linspace(0, img_shape[0]-1, img_shape[0])
         left_fit_x = left_fit[0]*plot_y**2 + left_fit[1]*plot_y + left_fit[2]
         right_fit_x = right_fit[0]*plot_y**2 + right_fit[1]*plot_y + right_fit[2]
-        # try:
-            # left_fit_x = left_fit[0]*plot_y**2 + left_fit[1]*plot_y + left_fit[2]
-            # right_fit_x = right_fit[0]*plot_y**2 + right_fit[1]*plot_y + right_fit[2]
-        # except TypeError:
-            # # The polyfit function wasn't able to compute any coefficients
-            # print('The function failed to fit a lane!')
-            # left_fit_x = plot_y**2 + plot_y
-            # right_fit_x = plot_y**2 + plot_y
 
     return left_fit, right_fit, plot_y, left_fit_x, right_fit_x
 
 
-def fit_polynomial_with_sliding_window(binary_img, num_windows=9, margin=100, min_pix=50, draw=False, plot=False):
+def fit_polynomial_with_sliding_window(binary_img, lane_detection=None, num_windows=9, margin=100, min_pix=50, draw=False, plot=False):
     """
     Finds the lane pixels in a warped image with sliding windows
 
@@ -391,6 +383,17 @@ def fit_polynomial_with_sliding_window(binary_img, num_windows=9, margin=100, mi
     try:
         left_fit, right_fit, plot_y, left_fit_x, right_fit_x = fit_polynomial(lefty,
             leftx, righty, rightx, draw=draw, img_shape=binary_img.shape)
+
+        if lane_detection is not None:
+            lane_detection.left_fits.append(left_fit)
+            lane_detection.right_fits.append(right_fit)
+
+            left_fit = np.mean(lane_detection.left_fits, axis=0)
+            right_fit = np.mean(lane_detection.right_fits, axis=0)
+
+            left_fit_x = left_fit[0]*plot_y**2 + left_fit[1]*plot_y + left_fit[2]
+            right_fit_x = right_fit[0]*plot_y**2 + right_fit[1]*plot_y + right_fit[2]
+
     except TypeError:
         # The polyfit function wasn't able to compute any coefficients
         print('The function failed to fit a lane!')
@@ -406,7 +409,7 @@ def fit_polynomial_with_sliding_window(binary_img, num_windows=9, margin=100, mi
     return left_fit, right_fit, output_img
 
 
-def fit_polynomial_with_previous_coefficients(binary_img, left_fit, right_fit, margin=100, sliding_window_params=None, draw=False, plot=False):
+def fit_polynomial_with_previous_coefficients(binary_img, left_fit, right_fit, lane_detection=None, margin=100, sliding_window_params=None, draw=False, plot=False):
     """
     Finds the lane pixels in a warped image with sliding windows
 
@@ -453,6 +456,17 @@ def fit_polynomial_with_previous_coefficients(binary_img, left_fit, right_fit, m
     try:
         left_fit, right_fit, plot_y, left_fit_x, right_fit_x = fit_polynomial(lefty,
             leftx, righty, rightx, draw=draw, img_shape=binary_img.shape)
+
+        if lane_detection is not None:
+            lane_detection.left_fits.append(left_fit)
+            lane_detection.right_fits.append(right_fit)        
+
+            left_fit = np.mean(lane_detection.left_fits, axis=0)
+            right_fit = np.mean(lane_detection.right_fits, axis=0)
+
+            left_fit_x = left_fit[0]*plot_y**2 + left_fit[1]*plot_y + left_fit[2]
+            right_fit_x = right_fit[0]*plot_y**2 + right_fit[1]*plot_y + right_fit[2]
+
     except TypeError:
         # The polyfit function wasn't able to compute any coefficients
         print('The function failed to fit a lane. Falling back to sliding windows.')
@@ -503,7 +517,7 @@ def fit_polynomial_with_previous_coefficients(binary_img, left_fit, right_fit, m
     return left_fit, right_fit, output_img
 
 
-def calculate_curve_radius(y_eval, left_fit, right_fit, ym_per_pix=30/720, xm_per_pix=3.7/700):
+def calculate_curve_radius(y_eval, left_fit, right_fit, ym_per_pix=30/720):
     """
     Calculate curve radius given polynomial coefficients
 
@@ -512,13 +526,12 @@ def calculate_curve_radius(y_eval, left_fit, right_fit, ym_per_pix=30/720, xm_pe
     @param left_fit: polynomial coefficients for left lane
     @param right_fit: polynomial coefficients for right lane
     @param ym_per_pix: conversion in y from pixels space to meters
-    @param xm_per_pix: conversion in x from pixels space to meters
 
     @returns left_curve_radius, right_curve_radius: curve radiuses of both lanes
     """
 
-    left_curve_radius = ((1 + (2*left_fit[0]*y_eval + left_fit[1])**2)**1.5) / np.absolute(2*left_fit[0])
-    right_curve_radius = ((1 + (2*right_fit[0]*y_eval + right_fit[1])**2)**1.5) / np.absolute(2*right_fit[0])
+    left_curve_radius = ((1 + (2*left_fit[0]*y_eval*ym_per_pix + left_fit[1])**2)**1.5) / np.absolute(2*left_fit[0])
+    right_curve_radius = ((1 + (2*right_fit[0]*y_eval*ym_per_pix + right_fit[1])**2)**1.5) / np.absolute(2*right_fit[0])
     avg_radius = np.mean([left_curve_radius, right_curve_radius])
 
     return left_curve_radius, right_curve_radius, avg_radius
@@ -528,12 +541,13 @@ class LaneDetection():
     """
     Class to store the last coefficients to search for new lanes
 
-    @attr poly_fit: coefficients of lane polynomial fit
+    @attr poly_fits: coefficients of lane polynomial fit
+    @attr radiuses: last radiuses of curvature for averaging
     """
 
-    def __init__(self, left_fit=None, right_fit=None, radiuses=[]):
-        self.left_fit = left_fit
-        self.right_fit = right_fit
+    def __init__(self, left_fits=[], right_fits=[], radiuses=[]):
+        self.left_fits = left_fits
+        self.right_fits = right_fits
         self.radiuses = radiuses
 
 
@@ -584,7 +598,8 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
                 'ym_per_pix': 30/720,
                 'xm_per_pix': 3.7/700
             },
-            'avg_radius_num_frames': 1
+            'avg_radius_num_frames': 1,
+            'avg_poly_num_frames': 1
         }
     """
 
@@ -683,17 +698,18 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
             assert 'warp' in hyperparameters and 'src' in hyperparameters['warp']\
                 and 'dst' in hyperparameters['warp']
             warped, M_to_birds_eye_view = warp_image(combined,
-                                                             hyperparameters['warp']['src'],
-                                                             hyperparameters['warp']['dst'])
+                                                     hyperparameters['warp']['src'],
+                                                     hyperparameters['warp']['dst'])
         else:
             warped, _ = warp_image(combined, M=M_to_birds_eye_view)
 
         # Fit polynomial
-        if lane_detection.left_fit is None:
+        if len(lane_detection.left_fits) == 0:
             if 'poly_sliding_window' in hyperparameters:
                 params = hyperparameters['poly_sliding_window']
                 assert 'num_windows' in params and 'margin' in params and 'min_pix' in params
                 left_fit, right_fit, output_img = fit_polynomial_with_sliding_window(warped,
+                                                                                     lane_detection=lane_detection,
                                                                                      num_windows=params['num_windows'],
                                                                                      margin=params['margin'],
                                                                                      min_pix=params['min_pix'],
@@ -701,12 +717,15 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
             else:
                 left_fit, right_fit, output_img = fit_polynomial_with_sliding_window(warped, draw=True)
         else:
+            left_fit = np.mean(lane_detection.left_fits, axis=0)
+            right_fit = np.mean(lane_detection.right_fits, axis=0)
             if 'poly_previous' in hyperparameters:
                 params = hyperparameters['poly_previous']
                 assert 'margin' in params
                 left_fit, right_fit, output_img = fit_polynomial_with_previous_coefficients(warped,
-                                                                                            lane_detection.left_fit,
-                                                                                            lane_detection.right_fit,
+                                                                                            left_fit,
+                                                                                            right_fit,
+                                                                                            lane_detection=lane_detection,
                                                                                             margin=params['margin'],
                                                                                             draw=True)
             else:
@@ -716,19 +735,26 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
                     assert 'num_windows' in params and 'margin' in params and 'min_pix' in params
                     sliding_window_params = (params['num_windows'], params['margin'], params['min_pix'])
                 left_fit, right_fit, output_img = fit_polynomial_with_previous_coefficients(warped,
-                                                                                            lane_detection.left_fit,
-                                                                                            lane_detection.right_fit,
+                                                                                            left_fit,
+                                                                                            right_fit,
+                                                                                            lane_detection=lane_detection,
                                                                                             sliding_window_params=sliding_window_params,
                                                                                             draw=True)
-        lane_detection.left_fit, lane_detection.right_fit = left_fit, right_fit
+
+        if 'avg_poly_num_frames' in hyperparameters:
+            lane_detection.left_fits = lane_detection.left_fits[-hyperparameters['avg_poly_num_frames']:]
+            lane_detection.right_fits = lane_detection.right_fits[-hyperparameters['avg_poly_num_frames']:]
+        else:
+            avg_poly_num_frames = 30
+            lane_detection.left_fits = lane_detection.left_fits[-avg_poly_num_frames:]
+            lane_detection.right_fits = lane_detection.right_fits[-avg_poly_num_frames:]
 
         # Calculate radius
         if 'curve_radius' in hyperparameters:
             params = hyperparameters['curve_radius']
             assert 'ym_per_pix' in params and 'xm_per_pix' in params
             left_curve_radius, right_curve_radius, lane_avg_radius = calculate_curve_radius(warped.shape[0], left_fit, right_fit,
-                                                                                       ym_per_pix=params['ym_per_pix'],
-                                                                                       xm_per_pix=params['xm_per_pix'])
+                                                                                            ym_per_pix=params['ym_per_pix'])
         else:
             left_curve_radius, right_curve_radius, lane_avg_radius = calculate_curve_radius(warped.shape[0], left_fit, right_fit)
 
@@ -775,6 +801,8 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
 
         return img_with_boundaries
 
+    if not os.path.exists(os.path.dirname(output_video_path)):
+        os.makedirs(os.path.dirname(output_video_path))
 
     video = VideoFileClip(video_path)
     processed_video = video.fl_image(lambda image: process_image(image, hyperparameters, lane_detection,

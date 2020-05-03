@@ -107,13 +107,13 @@ Once the lanes have been found, there is not need to run the sliding windows on 
 
 ![alt text][image7]
 
-See *Sliding windows* and *Margin within previous lanes* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 253 through 503 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
+See *Sliding windows* and *Margin within previous lanes* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 253 through 517 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
 Using the curvature of lane equation given the polynomial coefficients I calculate both the radius for the left lane and for the right lane. Then I average them and return the result.
 
-See *Radius of curve* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 506 through 524 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
+See *Radius of curve* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 520 through 537 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
@@ -129,7 +129,7 @@ See *Result* section of [advanced_lane_detection.ipynb](https://github.com/josh3
 
 Here's a [link](https://youtu.be/sqobICfr758) (YouTube) to the project video.
 
-See *Video pipeline* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 527 through 782 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
+See *Video pipeline* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 540 through 810 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
 ---
 
@@ -138,6 +138,10 @@ See *Video pipeline* section of [advanced_lane_detection.ipynb](https://github.c
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 I had some problems of noise in the binary features step, specially in the saturacion step. I could solve this problem by setting the saturation to 0 where the brightness was not high enough.
+
+Additionally, I implemented a function to average the last coefficients to avoid jitter, specially when dealing with discontinuous lanes.
+
+Also, I thought there would be a problem in the sliding windows function if the curvature of a lane was too large. In this case, the windows would overflow out of the image. I simply limited the window movement to the size of the image.
 
 The pipeline fails in case the are different asphalt colors on the road and with shadows that make the lanes too dark, like bridge shadows. It also fails were the lanes become covered by leaves, for example.
 
