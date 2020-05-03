@@ -313,7 +313,10 @@ def fit_polynomial_with_sliding_window(binary_img, lane_detection=None, num_wind
     left_px_idxs, right_px_idxs = [], []
 
     # Optional output image for visualization
-    output_img = np.dstack((binary_img, binary_img, binary_img))*255 if draw else None
+    if draw:
+        output_img = np.dstack((binary_img, binary_img, binary_img))*255
+    else:
+        output_img = np.zeros_like(np.dstack((binary_img, binary_img, binary_img)))
 
     for window_num in range(num_windows):
 
@@ -382,7 +385,7 @@ def fit_polynomial_with_sliding_window(binary_img, lane_detection=None, num_wind
     left_fit, right_fit = None, None
     try:
         left_fit, right_fit, plot_y, left_fit_x, right_fit_x = fit_polynomial(lefty,
-            leftx, righty, rightx, draw=draw, img_shape=binary_img.shape)
+            leftx, righty, rightx, draw=True, img_shape=binary_img.shape)
 
         if lane_detection is not None:
             lane_detection.left_fits.append(left_fit)
@@ -393,6 +396,13 @@ def fit_polynomial_with_sliding_window(binary_img, lane_detection=None, num_wind
 
             left_fit_x = left_fit[0]*plot_y**2 + left_fit[1]*plot_y + left_fit[2]
             right_fit_x = right_fit[0]*plot_y**2 + right_fit[1]*plot_y + right_fit[2]
+
+        if not draw:
+            center = np.hstack((
+                np.array([np.transpose(np.vstack([left_fit_x, plot_y]))]),
+                np.array([np.flipud(np.transpose(np.vstack([right_fit_x, plot_y])))])
+                ))
+            cv2.fillPoly(output_img, np.int_([center]), (0, 255, 0))
 
     except TypeError:
         # The polyfit function wasn't able to compute any coefficients
@@ -429,7 +439,10 @@ def fit_polynomial_with_previous_coefficients(binary_img, left_fit, right_fit, l
     """
 
     # Optional output image for visualization
-    output_img = np.dstack((binary_img, binary_img, binary_img))*255 if draw else None
+    if draw:
+        output_img = np.dstack((binary_img, binary_img, binary_img))*255
+    else:
+        output_img = np.zeros_like(np.dstack((binary_img, binary_img, binary_img)))
 
     # Retrieve the indexes of all nonzero pixles in the image
     nonzero = binary_img.nonzero()
@@ -455,7 +468,7 @@ def fit_polynomial_with_previous_coefficients(binary_img, left_fit, right_fit, l
 
     try:
         left_fit, right_fit, plot_y, left_fit_x, right_fit_x = fit_polynomial(lefty,
-            leftx, righty, rightx, draw=draw, img_shape=binary_img.shape)
+            leftx, righty, rightx, draw=True, img_shape=binary_img.shape)
 
         if lane_detection is not None:
             lane_detection.left_fits.append(left_fit)
@@ -466,6 +479,13 @@ def fit_polynomial_with_previous_coefficients(binary_img, left_fit, right_fit, l
 
             left_fit_x = left_fit[0]*plot_y**2 + left_fit[1]*plot_y + left_fit[2]
             right_fit_x = right_fit[0]*plot_y**2 + right_fit[1]*plot_y + right_fit[2]
+
+        if not draw:
+            center = np.hstack((
+                np.array([np.transpose(np.vstack([left_fit_x, plot_y]))]),
+                np.array([np.flipud(np.transpose(np.vstack([right_fit_x, plot_y])))])
+                ))
+            cv2.fillPoly(output_img, np.int_([center]), (0, 255, 0))
 
     except TypeError:
         # The polyfit function wasn't able to compute any coefficients
@@ -713,9 +733,9 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
                                                                                      num_windows=params['num_windows'],
                                                                                      margin=params['margin'],
                                                                                      min_pix=params['min_pix'],
-                                                                                     draw=True)
+                                                                                     draw=False)
             else:
-                left_fit, right_fit, output_img = fit_polynomial_with_sliding_window(warped, draw=True)
+                left_fit, right_fit, output_img = fit_polynomial_with_sliding_window(warped, draw=False)
         else:
             left_fit = np.mean(lane_detection.left_fits, axis=0)
             right_fit = np.mean(lane_detection.right_fits, axis=0)
@@ -727,7 +747,7 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
                                                                                             right_fit,
                                                                                             lane_detection=lane_detection,
                                                                                             margin=params['margin'],
-                                                                                            draw=True)
+                                                                                            draw=False)
             else:
                 sliding_window_params = None
                 if 'poly_sliding_window' in hyperparameters:
@@ -739,7 +759,7 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
                                                                                             right_fit,
                                                                                             lane_detection=lane_detection,
                                                                                             sliding_window_params=sliding_window_params,
-                                                                                            draw=True)
+                                                                                            draw=False)
 
         if 'avg_poly_num_frames' in hyperparameters:
             lane_detection.left_fits = lane_detection.left_fits[-hyperparameters['avg_poly_num_frames']:]
@@ -768,7 +788,7 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
             unwarped, _ = warp_image(output_img, M=M_to_original)
 
         # Blend original image with boundaries
-        img_with_boundaries = cv2.addWeighted(undist, .6, unwarped, 1, 0)
+        img_with_boundaries = cv2.addWeighted(undist, 1, unwarped, .6, 0)
 
         # Caculate position of vehicle with respect to the center of the lane
         left_base = left_fit[0]*img.shape[0]**2 + left_fit[1]*img.shape[0] + left_fit[2]
@@ -791,12 +811,12 @@ def video_pipeline(video_path, output_video_path, hyperparameters={}):
 
         avg_radius = np.mean(lane_detection.radiuses)
         if avg_radius > 7_000:
-            cv2.putText(img_with_boundaries, "Straight line", (10, 40),
+            cv2.putText(img_with_boundaries, "Straight line", (10, 200),
                         cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
         else:
-            cv2.putText(img_with_boundaries, f"Radius of curvature: {avg_radius:.0f} m", (10, 40),
+            cv2.putText(img_with_boundaries, f"Radius of curvature: {avg_radius:.0f} m", (10, 200),
                         cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
-        cv2.putText(img_with_boundaries, f"Vehicle is {x_pos:.2f}m {'left' if x_pos < 0 else 'right'} of center", (10, 80),
+        cv2.putText(img_with_boundaries, f"Vehicle is {x_pos:.2f}m {'left' if x_pos < 0 else 'right'} of center", (10, 240),
                     cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
 
         return img_with_boundaries
