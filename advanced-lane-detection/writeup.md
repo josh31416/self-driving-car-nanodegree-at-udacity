@@ -127,7 +127,7 @@ See *Result* section of [advanced_lane_detection.ipynb](https://github.com/josh3
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link](https://youtu.be/sqobICfr758) (YouTube) to the project video.
+Here's a [link](https://youtu.be/X7GdggYSK0k) (YouTube) to the project video.
 
 See *Video pipeline* section of [advanced_lane_detection.ipynb](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/advanced_lane_detection.ipynb) and lines 560 through 830 of [helpers.py](https://github.com/josh31416/self-driving-car-nanodegree-at-udacity/blob/master/advanced-lane-detection/helpers.py)
 
