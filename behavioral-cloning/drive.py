@@ -16,6 +16,15 @@ from keras.models import load_model
 import h5py
 from keras import __version__ as keras_version
 
+import tensorflow as tf
+from tensorflow.compat.v1.keras.backend import set_session
+
+config = tf.compat.v1.ConfigProto()
+config.gpu_options.allow_growth = True
+
+sess = tf.compat.v1.Session(config=config)
+set_session(sess)
+
 sio = socketio.Server()
 app = Flask(__name__)
 model = None
